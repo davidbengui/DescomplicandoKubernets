@@ -1,0 +1,29 @@
+---
+- name: Check if a service is started on all webservers
+  hosts: webservers
+  become: true  # Run tasks with sudo
+
+  tasks:
+    - name: Check the service status on CentOS
+      systemd:
+        name: httpd
+        state: started
+      register: httpd_status
+      when: "'CentOS' in ansible_distribution"
+
+    - name: Check the service status on Ubuntu
+      systemd:
+        name: apache2
+        state: started
+      register: apache2_status
+      when: "'Ubuntu' in ansible_distribution"
+
+    - name: Display service status on CentOS
+      debug:
+        msg: "HTTP Service on CentOS is {{ 'started' if httpd_status is succeeded else 'not started' }}"
+      when: "'CentOS' in ansible_distribution"
+
+    - name: Display service status on Ubuntu
+      debug:
+        msg: "Apache Service on Ubuntu is {{ 'started' if apache2_status is succeeded else 'not started' }}"
+      when: "'Ubuntu' in ansible_distribution"
