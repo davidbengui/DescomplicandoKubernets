@@ -1,0 +1,43 @@
+---
+- name: Check the status of the web servers
+  hosts: webservers
+  become: true  # Run tasks with sudo
+
+  tasks:
+    - name: Check the status of Apache on CentOS
+      command: systemctl is-active httpd
+      register: httpd_status
+      ignore_errors: true
+      changed_when: false
+      when: "'CentOS' in ansible_distribution"
+
+    - name: Check the status of Apache on Ubuntu
+      command: systemctl is-active apache2
+      register: apache2_status
+      ignore_errors: true
+      changed_when: false
+      when: "'Ubuntu' in ansible_distribution"
+
+    - name: Gather facts about the webservers
+      setup:
+        gather_subset: ['service']
+
+    - name: Display webservers with stopped service
+      debug:
+        var: item.item
+      loop: "{{ ansible_facts.services | dict2items }}"
+      when: 
+        - "'httpd' in item.value and item.value.status != 'running'"
+        - "'CentOS' in ansible_distribution"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Display webservers with stopped service
+      debug:
+        var: item.item
+      loop: "{{ ansible_facts.services | dict2items }}"
+      when: 
+        - "'apache2' in item.value and item.value.status != 'running'"
+        - "'Ubuntu' in ansible_distribution"
+      loop_control:
+        label: "{{ item.item }}"
